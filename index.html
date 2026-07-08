@@ -5,57 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #fdfaf6; padding: 10px; color: #333; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { background: white; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .img-box { width: 100%; height: 90px; background-color: #eee; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
-        .card img { width: 100%; height: 100%; object-fit: cover; }
-        .name { font-size: 12px; font-weight: 500; height: 30px; margin-bottom: 5px; }
-        .price { font-weight: 800; color: #000; margin-bottom: 8px; }
-        button { width: 100%; background: #ffffff; color: #000; border: 1px solid #ddd; padding: 6px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        body { font-family: sans-serif; background: #fdfaf6; padding: 10px; padding-bottom: 80px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card { background: white; border-radius: 15px; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; }
+        .add-btn { width: 100%; background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        
+        /* Пастки меню (Tab Bar) */
+        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+        .tab-item { text-align: center; font-size: 12px; color: #555; }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center; color: #4e342e;">Deep Coffee Menu</h2>
+    <h2 style="text-align: center;">Deep Coffee</h2>
     <div class="grid" id="menu"></div>
-    <button onclick="sendOrder()" style="width: 100%; background: #4CAF50; color: white; border: none; padding: 15px; border-radius: 10px; margin-top: 20px;">🛒 Буюртмани тасдиқлаш</button>
+
+    <!-- Пастки меню -->
+    <div class="tab-bar">
+        <div class="tab-item">🏠<br>Бош саҳифа</div>
+        <div class="tab-item">🛒<br>Сават</div>
+        <div class="tab-item">📝<br>Буюртмалар</div>
+        <div class="tab-item">👤<br>Профиль</div>
+    </div>
 
     <script>
         const menu = [
-            // Кофе
-            { name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723-3806e2365319?w=300" },
-            { name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976-62847bb82c03?w=300" },
-            { name: "Американо", price: 29000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343?w=300" },
-            { name: "Мокко", price: 39000, img: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=300" },
-            { name: "Раф", price: 37000, img: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300" },
-            // Коктейллар
-            { name: "Манго-апельсин", price: 50000, img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=300" },
-            { name: "Матча Сидзуока", price: 40000, img: "https://images.unsplash.com/photo-1515823662972-da6a2e4d3002?w=300" },
-            // Лимонадлар
-            { name: "Лимонад Апельсин", price: 40000, img: "https://images.unsplash.com/photo-1600271957965-03713f04494c?w=300" },
-            { name: "Облепиховый", price: 45000, img: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=300" },
-            // Чойлар
-            { name: "Чой Ассам", price: 20000, img: "https://images.unsplash.com/photo-1563911897033-662363f82a9d?w=300" },
-            { name: "Масала чойи", price: 35000, img: "https://images.unsplash.com/photo-1561336313-0bd4e0b27d45?w=300" },
-            { name: "Роза ветров", price: 40000, img: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=300" }
+            { name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723-3806e2365319" },
+            { name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976-62847bb82c03" }
         ];
-        
-        let cart = [];
         function display() {
             const div = document.getElementById('menu');
-            menu.forEach((item, i) => {
+            menu.forEach(item => {
                 div.innerHTML += `<div class="card">
-                    <div class="img-box"><img src="${item.img}" onerror="this.style.display='none'"></div>
-                    <div class="name">${item.name}</div>
-                    <div class="price">${item.price} сўм</div>
-                    <button onclick="add(${i})">Қўшиш</button>
+                    <img src="${item.img}">
+                    <div style="font-weight:bold;">${item.name}</div>
+                    <div style="color:red;">${item.price} сўм</div>
+                    <button class="add-btn" onclick="alert('Қўшилди!')">+</button>
                 </div>`;
             });
-        }
-        function add(i) { cart.push(menu[i]); alert(menu[i].name + " саватга қўшилди!"); }
-        function sendOrder() {
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            Telegram.WebApp.sendData(JSON.stringify({items: cart.map(i=>i.name).join(', '), total_price: total}));
         }
         display();
     </script>
