@@ -5,69 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --main-color: #d32f2f; --bg-color: #fdfaf6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 90px; }
-        .header { padding: 20px; font-size: 20px; font-weight: bold; text-align: center; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px; }
-        .card { background: white; border-radius: 18px; padding: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .card img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; margin-bottom: 8px; }
-        .name { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
-        .price { color: var(--main-color); font-weight: 800; margin-bottom: 10px; }
-        .add-btn { width: 100%; background: #f0f0f0; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 80px; }
+        .nav-header { padding: 15px; background: white; font-weight: bold; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #ddd; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .card { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 15px; }
+        .title { font-size: 14px; font-weight: 600; margin: 5px 0; }
+        .price { color: #d32f2f; font-weight: 700; margin-bottom: 10px; }
+        .add-btn { background: #f0f0f0; border: none; width: 100%; padding: 10px; border-radius: 10px; font-weight: bold; }
         
-        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; z-index: 1000; }
-        .tab-item { text-align: center; font-size: 24px; cursor: pointer; }
-        .label { font-size: 11px; display: block; color: #555; }
+        /* Табар (Sergosht услубида) */
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ccc; }
+        .tab { text-align: center; font-size: 10px; color: #555; }
+        .tab svg { width: 25px; height: 25px; display: block; margin: 0 auto 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header">Deep Coffee Menu</div>
-    <div class="grid" id="menu"></div>
+<div class="nav-header">Deep Coffee (Доставка)</div>
 
-    <div class="tab-bar">
-        <div class="tab-item" onclick="alert('Бош саҳифа')">🏠<span class="label">Бош</span></div>
-        <div class="tab-item" onclick="alert('Сават: ' + cart.length + ' та нарса')">🛒<span class="label">Сават</span></div>
-        <div class="tab-item" onclick="alert('Буюртмалар тарихи')">📝<span class="label">Тарих</span></div>
-        <div class="tab-item" onclick="profile()">👤<span class="label">Профиль</span></div>
-    </div>
+<div class="grid" id="menu"></div>
 
-    <script>
-        const menu = [
-            { name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723" },
-            { name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976" },
-            { name: "Американо", price: 29000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343" },
-            { name: "Смузи Манго", price: 50000, img: "https://images.unsplash.com/photo-1590301157890" }
-        ];
-        
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        
-        function display() {
-            const div = document.getElementById('menu');
-            menu.forEach((item, i) => {
-                div.innerHTML += `<div class="card">
-                    <img src="${item.img}" onerror="this.style.display='none'">
-                    <div class="name">${item.name}</div>
-                    <div class="price">${item.price} UZS</div>
-                    <button class="add-btn" onclick="addToCart(${i})">+</button>
-                </div>`;
-            });
-        }
-        
-        function addToCart(i) {
-            cart.push(menu[i]);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            Telegram.WebApp.HapticFeedback.impactOccurred('light');
-            alert(menu[i].name + " саватга қўшилди!");
-        }
+<div class="tab-bar">
+    <div class="tab" onclick="window.location.reload()">🏠<br>Главная</div>
+    <div class="tab" onclick="showCart()">🛒<br>Корзина</div>
+    <div class="tab" onclick="alert('История заказов пуста')">📝<br>Заказы</div>
+    <div class="tab" onclick="profile()">👤<br>Профиль</div>
+</div>
 
-        function profile() {
-            let name = localStorage.getItem('userName') || "Меҳмон";
-            let newName = prompt("Исмингизни киритинг:", name);
-            if(newName) localStorage.setItem('userName', newName);
-        }
+<script>
+    const menu = [
+        { name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723" },
+        { name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976" },
+        { name: "Американо", price: 29000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343" },
+        { name: "Смузи", price: 50000, img: "https://images.unsplash.com/photo-1590301157890" }
+    ];
 
-        display();
-    </script>
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    function display() {
+        const div = document.getElementById('menu');
+        div.innerHTML = "";
+        menu.forEach((item, i) => {
+            div.innerHTML += `<div class="card">
+                <img src="${item.img}">
+                <div class="title">${item.name}</div>
+                <div class="price">${item.price} UZS</div>
+                <button class="add-btn" onclick="addToCart(${i})">+</button>
+            </div>`;
+        });
+    }
+
+    function addToCart(i) {
+        cart.push(menu[i]);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+    }
+
+    function showCart() {
+        let msg = cart.length > 0 ? "Саватда: " + cart.map(i=>i.name).join(', ') : "Сават бўш";
+        alert(msg);
+    }
+
+    function profile() {
+        let name = localStorage.getItem('userName') || "";
+        let newName = prompt("Исмингизни киритинг:", name);
+        if(newName) localStorage.setItem('userName', newName);
+    }
+
+    display();
+</script>
 </body>
 </html>
