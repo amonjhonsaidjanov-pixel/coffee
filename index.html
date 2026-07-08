@@ -1,43 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 10px; background: #f4f4f4; }
-        .item { background: white; padding: 10px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; }
-        button { background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; padding: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card { background: white; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; }
+        .price { font-weight: bold; color: #d32f2f; margin: 5px 0; }
+        button { width: 100%; background: #4CAF50; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2>Deep Coffee Menu</h2>
-    <div id="menu"></div>
-    <button onclick="sendOrder()" style="width: 100%; padding: 15px; margin-top: 20px;">Буюртма бериш / Заказать / Order</button>
+    <h2 style="text-align: center;">Deep Coffee Menu</h2>
+    <div class="grid" id="menu"></div>
+    <button onclick="sendOrder()" style="margin-top: 20px; padding: 15px;">🛒 Буюртмани тасдиқлаш</button>
 
     <script>
         const menu = [
-            { name: "Латте / Latte", price: 330 },
-            { name: "Капучино / Cappuccino", price: 330 },
-            { name: "Американо / Americano", price: 290 },
-            { name: "Смузи манго-апельсин", price: 500 }
+            { name: "Латте / Latte", price: 30000, img: "https://images.unsplash.com/photo-1561882468-9ad55e4e8190" },
+            { name: "Капучино / Cappuccino", price: 33000, img: "https://images.unsplash.com/photo-1534778101976-62847bb82c03" },
+            { name: "Американо / Americano", price: 29000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343" },
+            { name: "Манго Смузи / Mango Smoothie", price: 50000, img: "https://images.unsplash.com/photo-1590301157890-4810ed352733" }
         ];
         let cart = [];
-        
+
         function display() {
             const div = document.getElementById('menu');
             menu.forEach((item, i) => {
-                div.innerHTML += `<div class="item">${item.name} - ${item.price} сўм <button onclick="add(${i})">+</button></div>`;
+                div.innerHTML += `<div class="card">
+                    <img src="${item.img}" alt="${item.name}">
+                    <div>${item.name}</div>
+                    <div class="price">${item.price} сўм</div>
+                    <button onclick="add(${i})">Қўшиш</button>
+                </div>`;
             });
         }
         function add(i) { cart.push(menu[i]); alert("Қўшилди!"); }
         function sendOrder() {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
-            const data = { items: cart.map(i => i.name).join(', '), total_price: total };
-            Telegram.WebApp.sendData(JSON.stringify(data));
+            Telegram.WebApp.sendData(JSON.stringify({items: cart.map(i=>i.name).join(', '), total_price: total}));
         }
         display();
     </script>
 </body>
 </html>
-
