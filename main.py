@@ -41,14 +41,14 @@ TEXTS = {
         'en': '📍 Please send your delivery address as text:'
     },
     'pay_choose': {
-        'uz': '💳 Тўлов турини танланг:',
-        'ru': '💳 Выберите способ оплаты:',
-        'en': '💳 Choose payment method:'
+        'uz': '💳 Тўлов турини танланг (Илова ичида очилади):',
+        'ru': '💳 Выберите способ оплаты (откроется в приложении):',
+        'en': '💳 Choose payment method (will open in app):'
     },
     'success_order': {
-        'uz': '✅ Раҳмат! Буюртмангиз қабул қилинди. Тўлов учун пастки тугмани босинг:',
-        'ru': '✅ Спасибо! Ваш заказ принят. Для оплаты нажмите кнопку ниже:',
-        'en': '✅ Thank you! Your order is accepted. Click the button below to pay:'
+        'uz': '✅ Раҳмат! Буюртмангиз қабул қилинди. Тўлов тугмасини босинг:',
+        'ru': '✅ Спасибо! Ваш заказ принят. Нажмите кнопку оплаты:',
+        'en': '✅ Thank you! Your order is accepted. Click the payment button:'
     }
 }
 
@@ -113,37 +113,25 @@ async def process_phone(message: types.Message, state: FSMContext):
 async def process_address(message: types.Message, state: FSMContext):
     await state.update_data(address=message.text)
     lang = (await state.get_data()).get('lang', 'uz')
-    
-    pay_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🟢 Click", callback_data="pay_click")],
-        [InlineKeyboardButton(text="🔵 Payme", callback_data="pay_payme")]
-    ])
-    await message.answer(TEXTS['pay_choose'][lang], reply_markup=pay_kb)
-    await state.set_state(OrderState.waiting_for_payment)
-
-@dp.callback_query(F.data.startswith("pay_"))
-async def process_payment(callback: types.CallbackQuery, state: FSMContext):
-    system = callback.data.split("_")[1]
     user_data = await state.get_data()
-    lang = user_data.get('lang', 'uz')
     total_price = user_data.get('total_price', 0)
     
-    link = "https://my.click.uz/" if system == "click" else "https://payme.uz/"
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"💸 {total_price:,} сўм тўлаш", url=link)]
+    # Энди тугмалар босилганда тўғридан-тўғри Телеграм ичида (илова сифатида) очилади
+    pay_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🟢 Click (Иловада очиш)", web_app=WebAppInfo(url=f"https://my.click.uz/"))],
+        [InlineKeyboardButton(text="🔵 Payme (Иловада очиш)", web_app=WebAppInfo(url=f"https://payme.uz/"))]
     ])
     
-    await callback.message.answer(f"{TEXTS['success_order'][lang]} ({system.upper()})", reply_markup=kb)
-    await callback.message.answer(TEXTS['welcome'][lang], reply_markup=get_main_menu(lang), parse_mode="Markdown")
+    await message.answer(f"🛒 **Умумий сумма:** {total_price:,} сўм\n{TEXTS['pay_choose'][lang]}", reply_markup=pay_kb)
     await state.set_state(OrderState.main_menu)
 
 @dp.message(F.text.in_(['💳 Тўлов усуллари', '💳 Способы оплаты', '💳 Payment Methods']))
 async def show_payment_info(message: types.Message, state: FSMContext):
     lang = (await state.get_data()).get('lang', 'uz')
     info_text = {
-        'uz': "💳 **Бизда мавжуд тўлов усуллари:**\n\n1. **Click** тизими орқали\n2. **Payme** тизими орқали\n3. Буюртмани олганда **Нақд пул** орқали",
-        'ru': "💳 **Доступные способы оплаты:**\n\n1. Через систему **Click**\n2. Через систему **Payme**\n3. **Наличными** при получении заказа",
-        'en': "💳 **Available payment methods:**\n\n1. Via **Click** system\n2. Via **Payme** system\n3. **Cash** upon receipt of the order"
+        'uz': "💳 **Бизда мавжуд тўлов усуллари:**\n\n1. **Click** иловаси орқали\n2. **Payme** иловаси орқали\n3. Буюртмани олганда **Нақд пул** орқали",
+        'ru': "💳 **Доступные способы оплаты:**\n\n1. Через приложение **Click**\n2. Через приложение **Payme**\n3. **Наличными** при получении заказа",
+        'en': "💳 **Available payment methods:**\n\n1. Via **Click** app\n2. Via **Payme** app\n3. **Cash** upon receipt of the order"
     }
     await message.reply(info_text[lang], parse_mode="Markdown")
 
