@@ -5,40 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; padding: 10px; }
+        body { font-family: sans-serif; background: #f4f4f4; padding: 10px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .card { background: white; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; }
-        .price { font-weight: bold; color: #d32f2f; margin: 5px 0; }
-        button { width: 100%; background: #4CAF50; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
+        .card { background: white; border-radius: 10px; padding: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; }
+        .price { font-weight: bold; color: #d32f2f; }
+        button { width: 100%; background: #4CAF50; color: white; border: none; padding: 5px; border-radius: 5px; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center;">Deep Coffee Menu</h2>
+    <h2 style="text-align:center;"> I26 Coffee Menu</h2>
     <div class="grid" id="menu"></div>
-    <button onclick="sendOrder()" style="margin-top: 20px; padding: 15px;">🛒 Буюртмани тасдиқлаш</button>
+    <button onclick="sendOrder()" style="padding: 15px; margin-top: 20px;">🛒 Буюртмани тасдиқлаш</button>
 
     <script>
         const menu = [
-            { name: "Латте / Latte", price: 30000, img: "https://images.unsplash.com/photo-1561882468-9ad55e4e8190" },
-            { name: "Капучино / Cappuccino", price: 33000, img: "https://images.unsplash.com/photo-1534778101976-62847bb82c03" },
-            { name: "Американо / Americano", price: 29000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343" },
-            { name: "Манго Смузи / Mango Smoothie", price: 50000, img: "https://images.unsplash.com/photo-1590301157890-4810ed352733" }
+            { name: "Латте / Latte", price: 33000, img: "https://images.unsplash.com/photo-1570968915860-54da5c3080e7" },
+            { name: "Капучино / Cappuccino", price: 35000, img: "https://images.unsplash.com/photo-1534778101976-62847bb82c03" },
+            { name: "Американо / Americano", price: 30000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343" },
+            { name: "Матча Сидзуока / Matcha", price: 40000, img: "https://images.unsplash.com/photo-1582234372134-2b91d40b3d31" },
+            { name: "Смузи манго / Mango Smoothie", price: 50000, img: "https://images.unsplash.com/photo-1590301157890-4810ed352733" },
+            { name: "Лимонад Апельсин / Lemonade", price: 40000, img: "https://images.unsplash.com/photo-1600271957965-03713f04494c" },
+            { name: "Чой Ассам / Assam Tea", price: 20000, img: "https://images.unsplash.com/photo-1563911897033-662363f82a9d" },
+            { name: "Чой Эрл грей / Earl grey Tea", price: 20000, img: "https://images.unsplash.com/photo-1563911897033-662363f82a9d" },
+             { name: "Чой Пуэр / Puer Tea", price: 20000, img: "https://images.unsplash.com/photo-1563911897033-662363f82a9d" },
+            { name: "Масала чойи / Masala Tea", price: 35000, img: "https://images.unsplash.com/photo-1561336313-0bd4e0b27d45" }
         ];
         let cart = [];
-
         function display() {
             const div = document.getElementById('menu');
             menu.forEach((item, i) => {
                 div.innerHTML += `<div class="card">
                     <img src="${item.img}" alt="${item.name}">
-                    <div>${item.name}</div>
+                    <div style="font-size: 12px; height: 30px;">${item.name}</div>
                     <div class="price">${item.price} сўм</div>
                     <button onclick="add(${i})">Қўшиш</button>
                 </div>`;
             });
         }
-        function add(i) { cart.push(menu[i]); alert("Қўшилди!"); }
+        function add(i) { cart.push(menu[i]); alert(menu[i].name + " қўшилди!"); }
         function sendOrder() {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             Telegram.WebApp.sendData(JSON.stringify({items: cart.map(i=>i.name).join(', '), total_price: total}));
