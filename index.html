@@ -5,67 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #fdfaf6; margin: 0; padding-bottom: 90px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .card { background: white; border-radius: 15px; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 90px; object-fit: cover; border-radius: 10px; }
+        :root { --main-color: #d32f2f; --bg-color: #fdfaf6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 90px; }
+        .header { padding: 20px; font-size: 20px; font-weight: bold; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px; }
+        .card { background: white; border-radius: 18px; padding: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; margin-bottom: 8px; }
+        .name { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+        .price { color: var(--main-color); font-weight: 800; margin-bottom: 10px; }
+        .add-btn { width: 100%; background: #f0f0f0; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         
-        /* Пастки меню ва иконкалар */
-        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid #eee; }
-        .tab-item { text-align: center; cursor: pointer; font-size: 24px; } /* Иконкалар катталаштирилди */
-        .label { font-size: 10px; display: block; }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; z-index: 1000; }
+        .tab-item { text-align: center; font-size: 24px; cursor: pointer; }
+        .label { font-size: 11px; display: block; color: #555; }
     </style>
 </head>
 <body>
 
-    <div id="main-page">
-        <h2 style="text-align: center;">Deep Coffee</h2>
-        <div class="grid" id="menu"></div>
-    </div>
+    <div class="header">Deep Coffee Menu</div>
+    <div class="grid" id="menu"></div>
 
     <div class="tab-bar">
-        <div class="tab-item" onclick="showPage('main')">🏠<span class="label">Бош</span></div>
-        <div class="tab-item" onclick="showPage('cart')">🛒<span class="label">Сават</span></div>
-        <div class="tab-item" onclick="showPage('profile')">👤<span class="label">Профиль</span></div>
+        <div class="tab-item" onclick="alert('Бош саҳифа')">🏠<span class="label">Бош</span></div>
+        <div class="tab-item" onclick="alert('Сават: ' + cart.length + ' та нарса')">🛒<span class="label">Сават</span></div>
+        <div class="tab-item" onclick="alert('Буюртмалар тарихи')">📝<span class="label">Тарих</span></div>
+        <div class="tab-item" onclick="profile()">👤<span class="label">Профиль</span></div>
     </div>
 
     <script>
-        // Маълумотлар
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let user = JSON.parse(localStorage.getItem('user')) || { name: "Меҳмон", phone: "Киритилмаган" };
-
-        function add(name, price) {
-            cart.push({ name, price });
-            localStorage.setItem('cart', JSON.stringify(cart));
-            alert(name + " саватга қўшилди!");
-        }
-
-        function showPage(page) {
-            if(page === 'cart') {
-                alert("Саватдаги буюртмалар: " + cart.map(i => i.name).join(', '));
-            } else if(page === 'profile') {
-                let newName = prompt("Исмингизни киритинг:", user.name);
-                if(newName) {
-                    user.name = newName;
-                    localStorage.setItem('user', JSON.stringify(user));
-                    alert("Сақланди: " + user.name);
-                }
-            }
-        }
-
-        // Менюни кўрсатиш
-        const items = [
-            { name: "Латте", price: 33000 },
-            { name: "Капучино", price: 35000 }
+        const menu = [
+            { name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723" },
+            { name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976" },
+            { name: "Американо", price: 29000, img: "https://images.unsplash.com/photo-1551066404-70e03e547343" },
+            { name: "Смузи Манго", price: 50000, img: "https://images.unsplash.com/photo-1590301157890" }
         ];
-        const div = document.getElementById('menu');
-        items.forEach(item => {
-            div.innerHTML += `<div class="card">
-                <div>${item.name}</div>
-                <div style="color:red;">${item.price} сўм</div>
-                <button onclick="add('${item.name}', ${item.price})" style="width:100%; border-radius:10px; padding:10px; border:none; background:#4CAF50; color:white;">+</button>
-            </div>`;
-        });
+        
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        function display() {
+            const div = document.getElementById('menu');
+            menu.forEach((item, i) => {
+                div.innerHTML += `<div class="card">
+                    <img src="${item.img}" onerror="this.style.display='none'">
+                    <div class="name">${item.name}</div>
+                    <div class="price">${item.price} UZS</div>
+                    <button class="add-btn" onclick="addToCart(${i})">+</button>
+                </div>`;
+            });
+        }
+        
+        function addToCart(i) {
+            cart.push(menu[i]);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            alert(menu[i].name + " саватга қўшилди!");
+        }
+
+        function profile() {
+            let name = localStorage.getItem('userName') || "Меҳмон";
+            let newName = prompt("Исмингизни киритинг:", name);
+            if(newName) localStorage.setItem('userName', newName);
+        }
+
+        display();
     </script>
 </body>
 </html>
