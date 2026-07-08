@@ -1,140 +1,43 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I26 Coffee Menu</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #1c1c1e;
-            color: #ffffff;
-            margin: 0;
-            padding: 15px;
-        }
-        .header { text-align: center; padding: 10px 0; border-bottom: 1px solid #2c2c2e; margin-bottom: 20px; }
-        .header h2 { margin: 0; font-size: 22px; color: #ff9500; }
-        .product-card {
-            background: #2c2c2e;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .product-info { display: flex; align-items: center; }
-        .product-img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
-        .product-details h3 { margin: 0 0 5px 0; font-size: 16px; }
-        .product-details p { margin: 0; color: #ff9500; font-weight: bold; font-size: 14px; }
-        .counter { display: flex; align-items: center; background: #3a3a3c; border-radius: 20px; padding: 5px 10px; }
-        .btn-count { background: none; border: none; color: #ff9500; font-size: 20px; font-weight: bold; cursor: pointer; padding: 0 10px; }
-        .count-num { font-size: 16px; min-width: 20px; text-align: center; }
-        .footer-btn {
-            position: fixed; bottom: 20px; left: 15px; right: 15px;
-            background: #ff9500; color: #ffffff; border: none; border-radius: 10px;
-            padding: 15px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center;
-        }
+        body { font-family: sans-serif; padding: 10px; background: #f4f4f4; }
+        .item { background: white; padding: 10px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; }
+        button { background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h2>I26 Coffee Menu</h2>
-    </div>
-
-    <div class="product-card">
-        <div class="product-info">
-            <img class="product-img" src="https://images.unsplash.com/photo-1510972527409-cca19de31749">
-            <div class="product-details">
-                <h3>☕ Эспрессо</h3>
-                <p>15,000 UZS</p>
-            </div>
-        </div>
-        <div class="counter">
-            <button class="btn-count" onclick="changeCount('espresso', -1)">-</button>
-            <div class="count-num" id="espresso-count">0</div>
-            <button class="btn-count" onclick="changeCount('espresso', 1)">+</button>
-        </div>
-    </div>
-
-    <div class="product-card">
-        <div class="product-info">
-            <img class="product-img" src="https://images.unsplash.com/photo-1572442388796-11668a67e13a">
-            <div class="product-details">
-                <h3>🥛 Капучино</h3>
-                <p>22,000 UZS</p>
-            </div>
-        </div>
-        <div class="counter">
-            <button class="btn-count" onclick="changeCount('cappuccino', -1)">-</button>
-            <div class="count-num" id="cappuccino-count">0</div>
-            <button class="btn-count" onclick="changeCount('cappuccino', 1)">+</button>
-        </div>
-    </div>
-
-    <div class="product-card">
-        <div class="product-info">
-            <img class="product-img" src="https://images.unsplash.com/photo-1528952686551-542043782ab9">
-            <div class="product-details">
-                <h3>🍫 Латте</h3>
-                <p>24,000 UZS</p>
-            </div>
-        </div>
-        <div class="counter">
-            <button class="btn-count" onclick="changeCount('latte', -1)">-</button>
-            <div class="count-num" id="latte-count">0</div>
-            <button class="btn-count" onclick="changeCount('latte', 1)">+</button>
-        </div>
-    </div>
-
-    <button class="footer-btn" id="basket-btn" onclick="sendOrder()">Сават бўш</button>
+    <h2>Deep Coffee Menu</h2>
+    <div id="menu"></div>
+    <button onclick="sendOrder()" style="width: 100%; padding: 15px; margin-top: 20px;">Буюртма бериш / Заказать / Order</button>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let cart = { espresso: 0, cappuccino: 0, latte: 0 };
-        let prices = { espresso: 15000, cappuccino: 22000, latte: 24000 };
-        let names = { espresso: "☕ Эспрессо", cappuccino: "🥛 Капучино", latte: "🍫 Латте" };
-
-        function changeCount(item, amount) {
-            cart[item] = Math.max(0, cart[item] + amount);
-            document.getElementById(`${item}-count`).innerText = cart[item];
-            updateBasketButton();
+        const menu = [
+            { name: "Латте / Latte", price: 330 },
+            { name: "Капучино / Cappuccino", price: 330 },
+            { name: "Американо / Americano", price: 290 },
+            { name: "Смузи манго-апельсин", price: 500 }
+        ];
+        let cart = [];
+        
+        function display() {
+            const div = document.getElementById('menu');
+            menu.forEach((item, i) => {
+                div.innerHTML += `<div class="item">${item.name} - ${item.price} сўм <button onclick="add(${i})">+</button></div>`;
+            });
         }
-
-        function updateBasketButton() {
-            let total = 0;
-            let count = 0;
-            for (let item in cart) {
-                total += cart[item] * prices[item];
-                count += cart[item];
-            }
-            let btn = document.getElementById("basket-btn");
-            if (count > 0) {
-                btn.innerText = `Буюртма бериш: ${total.toLocaleString()} сўм (${count})`;
-            } else {
-                btn.innerText = "Сават бўш";
-            }
-        }
-
+        function add(i) { cart.push(menu[i]); alert("Қўшилди!"); }
         function sendOrder() {
-            let orderItems = [];
-            let total = 0;
-            for (let item in cart) {
-                if (cart[item] > 0) {
-                    orderItems.push(`${names[item]} x ${cart[item]}`);
-                    total += cart[item] * prices[item];
-                }
-            }
-            if (orderItems.length === 0) return;
-
-            let data = { items: orderItems.join(", "), total_price: total };
-            tg.sendData(JSON.stringify(data));
-            tg.close();
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const data = { items: cart.map(i => i.name).join(', '), total_price: total };
+            Telegram.WebApp.sendData(JSON.stringify(data));
         }
+        display();
     </script>
 </body>
 </html>
+
