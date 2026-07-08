@@ -2,69 +2,70 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #fdfaf6; padding-bottom: 80px; margin: 0; }
+        body { font-family: sans-serif; background: #fdfaf6; margin: 0; padding-bottom: 90px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
         .card { background: white; border-radius: 15px; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card img { width: 100%; height: 90px; object-fit: cover; border-radius: 10px; }
-        .add-btn { width: 100%; background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 10px; font-weight: bold; }
-        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #ddd; }
+        
+        /* Пастки меню ва иконкалар */
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid #eee; }
+        .tab-item { text-align: center; cursor: pointer; font-size: 24px; } /* Иконкалар катталаштирилди */
+        .label { font-size: 10px; display: block; }
     </style>
 </head>
 <body>
-    <div id="content">
+
+    <div id="main-page">
         <h2 style="text-align: center;">Deep Coffee</h2>
         <div class="grid" id="menu"></div>
     </div>
 
     <div class="tab-bar">
-        <div onclick="showPage('menu')">🏠 Бош</div>
-        <div onclick="showPage('cart')">🛒 Сават (<span id="cart-count">0</span>)</div>
-        <div onclick="showPage('orders')">📝 Буюртма</div>
-        <div onclick="showPage('profile')">👤 Профиль</div>
+        <div class="tab-item" onclick="showPage('main')">🏠<span class="label">Бош</span></div>
+        <div class="tab-item" onclick="showPage('cart')">🛒<span class="label">Сават</span></div>
+        <div class="tab-item" onclick="showPage('profile')">👤<span class="label">Профиль</span></div>
     </div>
 
     <script>
-        const menu = [
-            { id: 1, name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723" },
-            { id: 2, name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976" }
-        ];
-        
-        // Саватни сақлаш
+        // Маълумотлар
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        
-        function updateCart() {
-            document.getElementById('cart-count').innerText = cart.length;
+        let user = JSON.parse(localStorage.getItem('user')) || { name: "Меҳмон", phone: "Киритилмаган" };
+
+        function add(name, price) {
+            cart.push({ name, price });
             localStorage.setItem('cart', JSON.stringify(cart));
-        }
-
-        function add(id) {
-            const item = menu.find(m => m.id === id);
-            cart.push(item);
-            updateCart();
-            alert(item.name + " қўшилди!");
-        }
-
-        function displayMenu() {
-            const div = document.getElementById('menu');
-            menu.forEach(item => {
-                div.innerHTML += `<div class="card">
-                    <img src="${item.img}">
-                    <div>${item.name}</div>
-                    <div style="color:red;">${item.price} сўм</div>
-                    <button class="add-btn" onclick="add(${item.id})">+</button>
-                </div>`;
-            });
+            alert(name + " саватга қўшилди!");
         }
 
         function showPage(page) {
-            if(page === 'profile') alert("Исм: " + (localStorage.getItem('user_name') || "Меҳмон"));
-            // Бу ерда саҳифаларни алмаштириш мантиғини қўшасиз
+            if(page === 'cart') {
+                alert("Саватдаги буюртмалар: " + cart.map(i => i.name).join(', '));
+            } else if(page === 'profile') {
+                let newName = prompt("Исмингизни киритинг:", user.name);
+                if(newName) {
+                    user.name = newName;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    alert("Сақланди: " + user.name);
+                }
+            }
         }
 
-        displayMenu();
-        updateCart();
+        // Менюни кўрсатиш
+        const items = [
+            { name: "Латте", price: 33000 },
+            { name: "Капучино", price: 35000 }
+        ];
+        const div = document.getElementById('menu');
+        items.forEach(item => {
+            div.innerHTML += `<div class="card">
+                <div>${item.name}</div>
+                <div style="color:red;">${item.price} сўм</div>
+                <button onclick="add('${item.name}', ${item.price})" style="width:100%; border-radius:10px; padding:10px; border:none; background:#4CAF50; color:white;">+</button>
+            </div>`;
+        });
     </script>
 </body>
 </html>
