@@ -2,49 +2,69 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #fdfaf6; padding: 10px; padding-bottom: 80px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        body { font-family: sans-serif; background: #fdfaf6; padding-bottom: 80px; margin: 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
         .card { background: white; border-radius: 15px; padding: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; }
-        .add-btn { width: 100%; background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        
-        /* Пастки меню (Tab Bar) */
-        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
-        .tab-item { text-align: center; font-size: 12px; color: #555; }
+        .card img { width: 100%; height: 90px; object-fit: cover; border-radius: 10px; }
+        .add-btn { width: 100%; background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 10px; font-weight: bold; }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #ddd; }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center;">Deep Coffee</h2>
-    <div class="grid" id="menu"></div>
+    <div id="content">
+        <h2 style="text-align: center;">Deep Coffee</h2>
+        <div class="grid" id="menu"></div>
+    </div>
 
-    <!-- Пастки меню -->
     <div class="tab-bar">
-        <div class="tab-item">🏠<br>Бош саҳифа</div>
-        <div class="tab-item">🛒<br>Сават</div>
-        <div class="tab-item">📝<br>Буюртмалар</div>
-        <div class="tab-item">👤<br>Профиль</div>
+        <div onclick="showPage('menu')">🏠 Бош</div>
+        <div onclick="showPage('cart')">🛒 Сават (<span id="cart-count">0</span>)</div>
+        <div onclick="showPage('orders')">📝 Буюртма</div>
+        <div onclick="showPage('profile')">👤 Профиль</div>
     </div>
 
     <script>
         const menu = [
-            { name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723-3806e2365319" },
-            { name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976-62847bb82c03" }
+            { id: 1, name: "Латте", price: 33000, img: "https://images.unsplash.com/photo-1593482836723" },
+            { id: 2, name: "Капучино", price: 35000, img: "https://images.unsplash.com/photo-1518778101976" }
         ];
-        function display() {
+        
+        // Саватни сақлаш
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        function updateCart() {
+            document.getElementById('cart-count').innerText = cart.length;
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function add(id) {
+            const item = menu.find(m => m.id === id);
+            cart.push(item);
+            updateCart();
+            alert(item.name + " қўшилди!");
+        }
+
+        function displayMenu() {
             const div = document.getElementById('menu');
             menu.forEach(item => {
                 div.innerHTML += `<div class="card">
                     <img src="${item.img}">
-                    <div style="font-weight:bold;">${item.name}</div>
+                    <div>${item.name}</div>
                     <div style="color:red;">${item.price} сўм</div>
-                    <button class="add-btn" onclick="alert('Қўшилди!')">+</button>
+                    <button class="add-btn" onclick="add(${item.id})">+</button>
                 </div>`;
             });
         }
-        display();
+
+        function showPage(page) {
+            if(page === 'profile') alert("Исм: " + (localStorage.getItem('user_name') || "Меҳмон"));
+            // Бу ерда саҳифаларни алмаштириш мантиғини қўшасиз
+        }
+
+        displayMenu();
+        updateCart();
     </script>
 </body>
 </html>
