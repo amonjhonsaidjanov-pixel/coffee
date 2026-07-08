@@ -60,14 +60,115 @@ class OrderState(StatesGroup):
     waiting_for_payment = State()
 
 def get_main_menu(lang):
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=TEXTS['menu_btn'][lang], web_app=WebAppInfo(url=WEBAPP_URL))],
-            [KeyboardButton(text=TEXTS['pay_info_btn'][lang]), KeyboardButton(text=TEXTS['lang_btn'][lang])]
-        ],
-        resize_keyboard=True
-    )
+    kb = [
+        [KeyboardButton(text=TEXTS['menu_btn'][lang], web_app=WebAppInfo(url=WEBAPP_URL))],
+        [KeyboardButton(text=TEXTS['pay_info_btn'][lang]), KeyboardButton(text=TEXTS['lang_btn'][lang])]
+    ]
+    return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
 
 def get_lang_keyboard():
-    return InlineKeyboardMarkup(inline_keyboard=[
+    kb = [
         [InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="lang_uz")],
+        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru")],
+        [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+@dp.message(CommandStart())
+async def cmd_start(message: types.Message, state: FSMContext):
+    await message.reply("🌐 Тилни танланг / Выберите язык / Choose language:", reply_markup=get_lang_keyboard())
+    await state.set_state(OrderState.language)
+
+@dp.callback_query(F.data.startswith("lang_"))
+async def set_language(callback: types.CallbackQuery, state: FSMContext):
+    lang = callback.data.split("_")[1]
+    await state.update_data(lang=lang)
+    await callback.message.delete()
+    await callback.message.answer(TEXTS['welcome'][lang], reply_markup=get_main_menu(lang), parse_mode="Markdown")
+    await state.set_state(OrderState.main_menu)
+
+@dp.message(F.web_app_data)
+async def web_app_data_handler(message: types.Message, state: FSMContext):
+    data = json.loads(message.web_app_data.data)
+    await state.update_data(order_items=data['items'], total_price=data['total_price'])
+    lang = (await state.get_data()).get('lang', 'uz')
+    
+    phone_kb = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=TEXTS['send_phone_btn'][lang], request_contact=True)]],
+        resize_keyboard=True, one_time_keyboard=True
+    )
+    report = f"🛒 **Сизнинг буюртмангиз:**\n{data['items']}\n\n💰 **Умумий сумма:** {data['total_price']:,} сўм"
+    await message.answer(report, parse_mode="Markdown")
+    await message.answer(TEXTS['ask_phone'][lang], reply_markup=phone_kb)
+    await state.set_state(OrderState.waiting_for_phone)
+
+@dp.message(OrderState.waiting_for_phone, F.contact)
+async def process_phone(message: types.Message, state: FSMContext):
+    await state.update_data(phone=message.contact.phone_number)
+    lang = (await state.get_data()).get('lang', 'uz')
+    await message.answer(TEXTS['ask_address'][lang], reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(OrderState.waiting_for_address)
+
+@dp.message(OrderState.waiting_for_address)
+async def process_address(message: types.Message, state: FSMContext):
+    await state.update_data(address=message.text)
+    lang = (await state.get_data()).get('lang', 'uz')
+    
+    pay_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🟢 Click", callback_data="pay_click")],
+        [InlineKeyboardButton(text="🔵 Payme", callback_data="pay_payme")]
+    ])
+    await message.answer(TEXTS['pay_choose'][lang], reply_markup=pay_kb)
+    await state.set_state(OrderState.waiting_for_payment)
+
+@dp.callback_query(F.data.startswith("pay_"))
+async def process_payment(callback: types.CallbackQuery, state: FSMContext):
+    system = callback.data.split("_")[1]
+    user_data = await state.get_data()
+    lang = user_data.get('lang', 'uz')
+    total_price = user_data.get('total_price', 0)
+    
+    link = "https://my.click.uz/" if system == "click" else "https://payme.uz/"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=f"💸 {total_price:,} сўм тўлаш", url=link)]
+    ])
+    
+    await callback.message.answer(f"{TEXTS['success_order'][lang]} ({system.upper()})", reply_markup=kb)
+    await callback.message.answer(TEXTS['welcome'][lang], reply_markup=get_main_menu(lang), parse_mode="Markdown")
+    await state.set_state(OrderState.main_menu)
+
+@dp.message(F.text.in_(['💳 Тўлов усуллари', '💳 Способы оплаты', '💳 Payment Methods']))
+async def show_payment_info(message: types.Message, state: FSMContext):
+    lang = (await state.get_data()).get('lang', 'uz')
+    info_text = {
+        'uz': "💳 **Бизда мавжуд тўлов усуллари:**\n\n1. **Click** тизими орқали\n2. **Payme** тизими орқали\n3. Буюртмани олганда **Нақд пул** орқали",
+        'ru': "💳 **Доступные способы оплаты:**\n\n1. Через систему **Click**\n2. Через систему **Payme**\n3. **Наличными** при получении заказа",
+        'en': "💳 **Available payment methods:**\n\n1. Via **Click** system\n2. Via **Payme** system\n3. **Cash** upon receipt of the order"
+    }
+    await message.reply(info_text[lang], parse_mode="Markdown")
+
+@dp.message(F.text.in_(['🌐 Тилни ўзгартириш', '🌐 Изменить язык', '🌐 Change Language']))
+async def change_lang(message: types.Message, state: FSMContext):
+    await message.reply("🌐 Тилни танланг / Выберите язык / Choose language:", reply_markup=get_lang_keyboard())
+    await state.set_state(OrderState.language)
+
+async def handle(request):
+    try:
+        with open('index.html', 'r', encoding='utf-8') as f:
+            return web.Response(text=f.read(), content_type='text/html')
+    except:
+        return web.Response(text="Бот ишламоқда!")
+
+async def main():
+    asyncio.create_task(dp.start_polling(bot))
+    app = web.Application()
+    app.router.add_get('/', handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', int(os.environ.get("PORT", 8080)))
+    await site.start()
+    while True:
+        await asyncio.sleep(3600)
+
+if __name__ == '__main__':
+    asyncio.run(main())
