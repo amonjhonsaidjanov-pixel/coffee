@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import json
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
@@ -8,30 +9,17 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton, 
-    InlineKeyboardMarkup, InlineKeyboardButton
+    InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 )
 from aiohttp import web
 
 API_TOKEN = '8995419824:AAG3S2y5SLZDx8fAI-8EkiBXkpQRtiaBg4s'
+# ⚠️ ДИҚҚАТ! Пастдаги линк ўрнига ўзингизни Render'даги кўк лингингизни қўйинг:
+WEBAPP_URL = 'https://coffee-4i66.onrender.com' 
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
-
-PRODUCTS = {
-    'espresso': {
-        'uz': '☕ Эспрессо', 'ru': '☕ Эспрессо', 'en': '☕ Espresso', 
-        'price': 15000, 'image': 'https://images.unsplash.com/photo-1510972527409-cca19de31749'
-    },
-    'cappuccino': {
-        'uz': '🥛 Капучино', 'ru': '🥛 Капучино', 'en': '🥛 Cappuccino', 
-        'price': 22000, 'image': 'https://images.unsplash.com/photo-1572442388796-11668a67e13a'
-    },
-    'latte': {
-        'uz': '🍫 Латте', 'ru': '🍫 Латте', 'en': '🍫 Latte', 
-        'price': 24000, 'image': 'https://images.unsplash.com/photo-1528952686551-542043782ab9'
-    }
-}
 
 TEXTS = {
     'welcome': {
@@ -39,25 +27,14 @@ TEXTS = {
         'ru': "👋 Добро пожаловать в бот **I26 Coffee**! Выберите одну из кнопок ниже:",
         'en': "👋 Welcome to **I26 Coffee** bot! Choose one of the buttons below:"
     },
-    'menu_btn': {'uz': '☕ Меню', 'ru': '☕ Меню', 'en': '☕ Menu'},
+    'menu_btn': {'uz': '☕ Иловани очиш (Меню)', 'ru': '☕ Открыть приложение', 'en': '☕ Open App'},
     'loc_btn': {'uz': '📍 Манзил', 'ru': '📍 Адрес', 'en': '📍 Location'},
     'contact_btn': {'uz': '📞 Алоқа', 'ru': '📞 Контакты', 'en': '📞 Contact'},
     'lang_btn': {'uz': '🌐 Тилни ўзгартириш', 'ru': '🌐 Изменить язык', 'en': '🌐 Change Language'},
-    'order_btn': {'uz': '🛒 Буюртма бeриш', 'ru': '🛒 Заказать', 'en': '🛒 Order'},
-    'ask_count': {
-        'uz': '🔢 Миқдорни танланг ёки киритинг:',
-        'ru': '🔢 Выберите или введите количество:',
-        'en': '🔢 Choose or enter quantity:'
-    },
-    'add_basket': {
-        'uz': '📥 Саватга қўшиш',
-        'ru': '📥 Добавить в корзину',
-        'en': '📥 Add to basket'
-    },
     'ask_phone': {
-        'uz': '📞 Илтимос, пастки тугмани босиб тeлeфон рақамингизни юборинг:',
-        'ru': '📞 Пожалуйста, отправьте свой номер телефона, нажав кнопку ниже:',
-        'en': '📞 Please send your phone number by pressing the button below:'
+        'uz': '📞 Раҳмат! Илтимос, пастки тугмани босиб тeлeфон рақамингизни юборинг:',
+        'ru': '📞 Спасибо! Пожалуйста, отправьте свой номер телефона:',
+        'en': '📞 Thank you! Please send your phone number:'
     },
     'send_phone_btn': {'uz': '📱 Рақамни юбориш', 'ru': '📱 Отправить номер', 'en': '📱 Send number'},
     'ask_address': {
@@ -80,7 +57,6 @@ TEXTS = {
 class OrderState(StatesGroup):
     language = State()
     main_menu = State()
-    waiting_for_count = State()
     waiting_for_phone = State()
     waiting_for_address = State()
     waiting_for_payment = State()
@@ -88,7 +64,7 @@ class OrderState(StatesGroup):
 def get_main_menu(lang):
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=TEXTS['menu_btn'][lang])],
+            [KeyboardButton(text=TEXTS['menu_btn'][lang], web_app=WebAppInfo(url=WEBAPP_URL))],
             [KeyboardButton(text=TEXTS['loc_btn'][lang]), KeyboardButton(text=TEXTS['contact_btn'][lang])],
             [KeyboardButton(text=TEXTS['lang_btn'][lang])]
         ],
@@ -100,16 +76,6 @@ def get_lang_keyboard():
         [InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="lang_uz")],
         [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru")],
         [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
-    ])
-
-def get_count_keyboard(product_key, count, lang):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="➖", callback_data=f"cnt_{product_key}_{max(1, count-1)}"),
-            InlineKeyboardButton(text=f"🔢 {count}", callback_data="none"),
-            InlineKeyboardButton(text="➕", callback_data=f"cnt_{product_key}_{count+1}")
-        ],
-        [InlineKeyboardButton(text=TEXTS['add_basket'][lang], callback_data=f"cart_{product_key}_{count}")]
     ])
 
 @dp.message(CommandStart())
@@ -125,55 +91,22 @@ async def set_language(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(TEXTS['welcome'][lang], reply_markup=get_main_menu(lang), parse_mode="Markdown")
     await state.set_state(OrderState.main_menu)
 
-@dp.message(F.text.in_(['☕ Меню', '☕ Menu']))
-async def show_menu(message: types.Message, state: FSMContext):
-    user_data = await state.get_data()
-    lang = user_data.get('lang', 'uz')
-    
-    for key, prod in PRODUCTS.items():
-        kb = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=TEXTS['order_btn'][lang], callback_data=f"buy_{key}")]
-        ])
-        caption = f"*{prod[lang]}*\n💰 {prod['price']:,} сўм"
-        await message.answer_photo(photo=prod['image'], caption=caption, reply_markup=kb, parse_mode="Markdown")
-
-@dp.callback_query(F.data.startswith("buy_"))
-async def start_order(callback: types.CallbackQuery, state: FSMContext):
-    product_key = callback.data.split("_")[1]
-    user_data = await state.get_data()
-    lang = user_data.get('lang', 'uz')
-    
-    await callback.message.answer(
-        f"{PRODUCTS[product_key][lang]}\n{TEXTS['ask_count'][lang]}", 
-        reply_markup=get_count_keyboard(product_key, 1, lang)
-    )
-
-@dp.callback_query(F.data.startswith("cnt_"))
-async def change_count(callback: types.CallbackQuery, state: FSMContext):
-    _, product_key, count = callback.data.split("_")
-    count = int(count)
-    user_data = await state.get_data()
-    lang = user_data.get('lang', 'uz')
-    
-    await callback.message.edit_reply_markup(
-        reply_markup=get_count_keyboard(product_key, count, lang)
-    )
-
-@dp.callback_query(F.data.startswith("cart_"))
-async def add_to_cart(callback: types.CallbackQuery, state: FSMContext):
-    _, product_key, count = callback.data.split("_")
-    count = int(count)
-    await state.update_data(product=product_key, count=count)
+# Иловадан (Mini App) маълумот тушганда ишлайдиган қисм
+@dp.message(F.web_app_data)
+async def web_app_data_handler(message: types.Message, state: FSMContext):
+    data = json.loads(message.web_app_data.data)
+    await state.update_data(order_items=data['items'], total_price=data['total_price'])
     
     user_data = await state.get_data()
     lang = user_data.get('lang', 'uz')
-    await callback.message.delete()
     
     phone_kb = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text=TEXTS['send_phone_btn'][lang], request_contact=True)]],
         resize_keyboard=True, one_time_keyboard=True
     )
-    await callback.message.answer(TEXTS['ask_phone'][lang], reply_markup=phone_kb)
+    report = f"🛒 **Сизнинг буюртмангиз:**\n{data['items']}\n\n💰 **Умумий сумма:** {data['total_price']:,} сўм"
+    await message.answer(report, parse_mode="Markdown")
+    await message.answer(TEXTS['ask_phone'][lang], reply_markup=phone_kb)
     await state.set_state(OrderState.waiting_for_phone)
 
 @dp.message(OrderState.waiting_for_phone, F.contact)
@@ -203,12 +136,9 @@ async def process_payment(callback: types.CallbackQuery, state: FSMContext):
     system = callback.data.split("_")[1]
     user_data = await state.get_data()
     lang = user_data.get('lang', 'uz')
-    product_key = user_data.get('product')
-    count = user_data.get('count', 1)
+    total_price = user_data.get('total_price', 0)
     
-    total_price = PRODUCTS[product_key]['price'] * count
     link = "https://my.click.uz/" if system == "click" else "https://payme.uz/"
-    
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=f"💸 {total_price:,} сўм тўлаш", url=link)]
     ])
@@ -232,7 +162,11 @@ async def change_lang(message: types.Message, state: FSMContext):
     await state.set_state(OrderState.language)
 
 async def handle(request):
-    return web.Response(text="Бот янгиланди ва ишламоқда!")
+    try:
+        with open('index.html', 'r', encoding='utf-8') as f:
+            return web.Response(text=f.read(), content_type='text/html')
+    except:
+        return web.Response(text="Бот ишламоқда!")
 
 async def main():
     asyncio.create_task(dp.start_polling(bot))
