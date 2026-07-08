@@ -161,7 +161,6 @@ async def process_payment(callback: types.CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     lang = user_data.get('lang', 'uz')
     
-    # Тўлов тизимлари учун ҳавола (Мисол сифатида Click/Payme асосий саҳифаси қўйилди)
     link = "https://my.click.uz/" if system == "click" else "https://payme.uz/"
     
     kb = InlineKeyboardMarkup(inline_keyboard=[
